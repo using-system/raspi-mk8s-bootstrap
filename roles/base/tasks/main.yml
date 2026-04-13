@@ -48,13 +48,16 @@
   when: not (molecule_test | default(false))
   notify: Restart ssh
 
-- name: Configure UFW defaults
+- name: Configure UFW default deny incoming
   community.general.ufw:
-    direction: "{{ item.direction }}"
-    policy: "{{ item.policy }}"
-  loop:
-    - {direction: incoming, policy: deny}
-    - {direction: outgoing, policy: allow}
+    direction: incoming
+    policy: deny
+  when: not (molecule_test | default(false))
+
+- name: Configure UFW default allow outgoing
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
   when: not (molecule_test | default(false))
 
 - name: Allow SSH through UFW
