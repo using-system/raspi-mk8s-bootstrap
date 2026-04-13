@@ -18,4 +18,3 @@ base_packages:
   - python3-pip
   - ufw
   - snapd
-  - linux-modules-extra-raspi

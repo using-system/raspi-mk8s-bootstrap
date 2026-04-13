@@ -10,6 +10,12 @@
     name: "{{ base_packages }}"
     state: present
 
+- name: Install Raspberry Pi kernel modules
+  ansible.builtin.apt:
+    name: linux-modules-extra-raspi
+    state: present
+  when: not (molecule_test | default(false))
+
 - name: Set hostname
   ansible.builtin.hostname:
     name: "{{ base_hostname }}"
