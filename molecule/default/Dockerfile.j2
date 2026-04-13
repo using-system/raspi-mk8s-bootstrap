@@ -1,6 +1,7 @@
 FROM debian:bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV HOME=/root
 
 RUN apt-get update && apt-get install -y \
     systemd \
@@ -11,6 +12,6 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && mkdir -p /root/.ansible/tmp
+    && mkdir -p /tmp/.ansible/tmp
 
 CMD ["/lib/systemd/systemd"]
