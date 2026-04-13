@@ -1,0 +1,89 @@
+---
+- name: Update apt cache and upgrade system
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: dist
+    cache_valid_time: 3600
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name: "{{ base_packages }}"
+    state: present
+
+- name: Install Raspberry Pi kernel modules
+  ansible.builtin.apt:
+    name: linux-modules-extra-raspi
+    state: present
+  when: not (molecule_test | default(false))
+
+- name: Set hostname
+  ansible.builtin.hostname:
+    name: "{{ base_hostname }}"
+  when: not (molecule_test | default(false))
+
+- name: Update /etc/hosts with hostname
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '^127\.0\.1\.1'
+    line: "127.0.1.1\t{{ base_hostname }}"
+  when: not (molecule_test | default(false))
+
+- name: Set timezone
+  community.general.timezone:
+    name: "{{ base_timezone }}"
+  when: not (molecule_test | default(false))
+
+- name: Generate locale
+  community.general.locale_gen:
+    name: "{{ base_locale }}"
+    state: present
+  when: not (molecule_test | default(false))
+
+- name: Enable cgroups for Kubernetes (cmdline.txt)
+  ansible.builtin.lineinfile:
+    path: /boot/firmware/cmdline.txt
+    regexp: '^((?!.*cgroup_enable=memory cgroup_memory=1).*)$'
+    line: '\1 cgroup_enable=memory cgroup_memory=1'
+    backrefs: true
+  when: not (molecule_test | default(false))
+  notify: Restart ssh
+
+- name: Configure UFW default deny incoming
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+  when: not (molecule_test | default(false))
+
+- name: Configure UFW default allow outgoing
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
+  when: not (molecule_test | default(false))
+
+- name: Allow SSH through UFW
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+  when: not (molecule_test | default(false))
+
+- name: Allow MicroK8s ports through UFW
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "16443"  # API server
+    - "10250"  # kubelet
+    - "10255"  # kubelet read-only
+    - "25000"  # cluster join
+    - "12379"  # etcd
+    - "10257"  # controller-manager
+    - "10259"  # scheduler
+    - "19001"  # dqlite
+  when: not (molecule_test | default(false))
+
+- name: Enable UFW
+  community.general.ufw:
+    state: enabled
+  when: not (molecule_test | default(false))

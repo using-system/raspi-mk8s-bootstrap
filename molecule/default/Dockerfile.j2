@@ -1,0 +1,16 @@
+FROM debian:bookworm
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV HOME=/root
+
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-apt \
+    sudo \
+    gnupg \
+    ca-certificates \
+    bash \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+CMD ["sleep", "infinity"]

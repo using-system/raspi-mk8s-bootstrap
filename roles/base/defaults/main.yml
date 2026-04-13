@@ -1,0 +1,20 @@
+---
+base_hostname: "{{ inventory_hostname }}"
+base_locale: en_US.UTF-8
+base_timezone: Europe/Paris
+
+base_packages:
+  - git
+  - curl
+  - wget
+  - vim
+  - htop
+  - tmux
+  - jq
+  - unzip
+  - ca-certificates
+  - gnupg
+  - apt-transport-https
+  - python3-pip
+  - ufw
+  - snapd

@@ -1,0 +1,9 @@
+---
+- name: Bootstrap MicroK8s cluster on Raspberry Pi
+  hosts: microk8s_cluster
+  become: true
+  roles:
+    - role: base
+      tags: [base]
+    - role: microk8s
+      tags: [microk8s]

@@ -1,0 +1,26 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Check base packages are installed
+      ansible.builtin.command: "dpkg -l {{ item }}"
+      loop:
+        - git
+        - curl
+        - vim
+        - htop
+        - tmux
+        - jq
+      changed_when: false
+
+    - name: Check kubectl alias script exists
+      ansible.builtin.stat:
+        path: /etc/profile.d/microk8s.sh
+      register: microk8s_profile
+
+    - name: Assert kubectl alias script exists
+      ansible.builtin.assert:
+        that:
+          - microk8s_profile.stat.exists
+        fail_msg: "microk8s profile script not found"

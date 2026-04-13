@@ -1,0 +1,7 @@
+---
+microk8s_channel: "1.30/stable"
+microk8s_user: "{{ ansible_user }}"
+
+microk8s_addons:
+  - dns
+  - rbac
