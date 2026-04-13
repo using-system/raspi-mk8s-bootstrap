@@ -30,15 +30,15 @@
   changed_when: false
   when:
     - not (molecule_test | default(false))
-    - inventory_hostname in groups['microk8s_master']
-  delegate_to: "{{ groups['microk8s_master'][0] }}"
+    - inventory_hostname in groups.get('microk8s_master', [])
+  delegate_to: "{{ groups.get('microk8s_master', [inventory_hostname])[0] }}"
   run_once: true
 
 - name: Join worker nodes to cluster
   ansible.builtin.command: "{{ microk8s_join_command.stdout_lines[0] }}"
   when:
     - not (molecule_test | default(false))
-    - inventory_hostname in groups['microk8s_workers']
+    - inventory_hostname in groups.get('microk8s_workers', [])
     - microk8s_join_command is defined
     - microk8s_join_command.stdout_lines | length > 0
   changed_when: true
@@ -67,4 +67,4 @@
     creates: "/home/{{ microk8s_user }}/.kube/config"
   when:
     - not (molecule_test | default(false))
-    - inventory_hostname in groups['microk8s_master']
+    - inventory_hostname in groups.get('microk8s_master', [])
