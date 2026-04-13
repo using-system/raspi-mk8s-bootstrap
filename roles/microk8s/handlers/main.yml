@@ -1,0 +1,6 @@
+---
+- name: Restart snap.microk8s.daemon-kubelite
+  ansible.builtin.systemd:
+    name: snap.microk8s.daemon-kubelite
+    state: restarted
+  when: not (molecule_test | default(false))

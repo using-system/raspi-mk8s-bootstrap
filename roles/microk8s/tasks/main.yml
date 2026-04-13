@@ -1,0 +1,70 @@
+---
+- name: Install MicroK8s via snap
+  community.general.snap:
+    name: microk8s
+    classic: true
+    channel: "{{ microk8s_channel }}"
+  when: not (molecule_test | default(false))
+
+- name: Add user to microk8s group
+  ansible.builtin.user:
+    name: "{{ microk8s_user }}"
+    groups: microk8s
+    append: true
+  when: not (molecule_test | default(false))
+
+- name: Wait for MicroK8s to be ready
+  ansible.builtin.command: microk8s status --wait-ready
+  changed_when: false
+  when: not (molecule_test | default(false))
+
+- name: Enable MicroK8s addons
+  ansible.builtin.command: "microk8s enable {{ item }}"
+  loop: "{{ microk8s_addons }}"
+  changed_when: false
+  when: not (molecule_test | default(false))
+
+- name: Generate join token on master
+  ansible.builtin.command: microk8s add-node --token-ttl 3600 --format short
+  register: microk8s_join_command
+  changed_when: false
+  when:
+    - not (molecule_test | default(false))
+    - inventory_hostname in groups['microk8s_master']
+  delegate_to: "{{ groups['microk8s_master'][0] }}"
+  run_once: true
+
+- name: Join worker nodes to cluster
+  ansible.builtin.command: "{{ microk8s_join_command.stdout_lines[0] }}"
+  when:
+    - not (molecule_test | default(false))
+    - inventory_hostname in groups['microk8s_workers']
+    - microk8s_join_command is defined
+    - microk8s_join_command.stdout_lines | length > 0
+  changed_when: true
+
+- name: Create kubectl alias
+  ansible.builtin.copy:
+    dest: /etc/profile.d/microk8s.sh
+    content: |
+      alias kubectl='microk8s kubectl'
+      alias helm='microk8s helm3'
+    mode: "0644"
+
+- name: Create kubeconfig directory
+  ansible.builtin.file:
+    path: "/home/{{ microk8s_user }}/.kube"
+    state: directory
+    owner: "{{ microk8s_user }}"
+    group: "{{ microk8s_user }}"
+    mode: "0755"
+  when: not (molecule_test | default(false))
+
+- name: Export kubeconfig
+  ansible.builtin.shell: |
+    microk8s config > /home/{{ microk8s_user }}/.kube/config
+  args:
+    creates: "/home/{{ microk8s_user }}/.kube/config"
+  when:
+    - not (molecule_test | default(false))
+    - inventory_hostname in groups['microk8s_master']
